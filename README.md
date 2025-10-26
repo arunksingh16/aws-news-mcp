@@ -62,7 +62,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-![FastMCP Server Running](../assets/image.png)
+![FastMCP Server Running](assets/image.png)
 
 Server will start on `http://0.0.0.0:8000`
 
