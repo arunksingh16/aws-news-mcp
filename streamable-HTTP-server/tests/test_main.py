@@ -3,7 +3,7 @@
 import pytest
 import json
 from unittest.mock import AsyncMock, patch, MagicMock
-from main import fetch_aws_news
+from main import fetch_aws_news, get_aws_feed_news
 import main
 
 
@@ -111,4 +111,112 @@ def test_fetch_aws_news_invalid_date():
             await fetch_aws_news("lambda", since_date="invalid-date")
     
     asyncio.run(test_invalid_date())
+
+
+@pytest.mark.asyncio
+async def test_get_aws_feed_news_success():
+    """Test successful RSS feed parsing"""
+    # Mock feed data
+    mock_feed = MagicMock()
+    mock_feed.bozo = False
+    
+    mock_entry1 = MagicMock()
+    mock_entry1.get.side_effect = lambda key, default="": {
+        "title": "New Lambda Feature",
+        "description": "AWS Lambda now supports...",
+        "link": "https://aws.amazon.com/lambda/news",
+        "published": "2025-10-24T00:00:00Z"
+    }.get(key, default)
+    
+    mock_entry2 = MagicMock()
+    mock_entry2.get.side_effect = lambda key, default="": {
+        "title": "S3 Update",
+        "description": "Amazon S3 announces...",
+        "link": "https://aws.amazon.com/s3/news",
+        "published": "2025-10-23T00:00:00Z"
+    }.get(key, default)
+    
+    mock_feed.entries = [mock_entry1, mock_entry2]
+    
+    with patch("feedparser.parse", return_value=mock_feed):
+        result_str = await get_aws_feed_news(max_articles=10)
+        result = json.loads(result_str)
+        
+        assert result["source"] == "AWS What's New Feed"
+        assert result["total_articles_returned"] == 2
+        assert len(result["articles"]) == 2
+        assert result["articles"][0]["title"] == "New Lambda Feature"
+
+
+@pytest.mark.asyncio
+async def test_get_aws_feed_news_with_search():
+    """Test RSS feed with search keywords"""
+    mock_feed = MagicMock()
+    mock_feed.bozo = False
+    
+    mock_entry1 = MagicMock()
+    mock_entry1.get.side_effect = lambda key, default="": {
+        "title": "New Lambda Feature",
+        "description": "AWS Lambda now supports...",
+        "link": "https://aws.amazon.com/lambda/news",
+        "published": "2025-10-24T00:00:00Z"
+    }.get(key, default)
+    
+    mock_entry2 = MagicMock()
+    mock_entry2.get.side_effect = lambda key, default="": {
+        "title": "S3 Update",
+        "description": "Amazon S3 announces...",
+        "link": "https://aws.amazon.com/s3/news",
+        "published": "2025-10-23T00:00:00Z"
+    }.get(key, default)
+    
+    mock_feed.entries = [mock_entry1, mock_entry2]
+    
+    with patch("feedparser.parse", return_value=mock_feed):
+        result_str = await get_aws_feed_news(max_articles=10, search_keywords="lambda")
+        result = json.loads(result_str)
+        
+        assert result["total_articles_returned"] == 1
+        assert result["articles"][0]["title"] == "New Lambda Feature"
+        assert result["search_keywords"] == "lambda"
+
+
+@pytest.mark.asyncio
+async def test_get_aws_feed_news_max_articles_limit():
+    """Test that max_articles limit is respected"""
+    mock_feed = MagicMock()
+    mock_feed.bozo = False
+    
+    # Create 5 mock entries
+    entries = []
+    for i in range(5):
+        mock_entry = MagicMock()
+        mock_entry.get.side_effect = lambda key, default="", i=i: {
+            "title": f"Article {i}",
+            "description": f"Description {i}",
+            "link": f"https://aws.amazon.com/article{i}",
+            "published": "2025-10-24T00:00:00Z"
+        }.get(key, default)
+        entries.append(mock_entry)
+    
+    mock_feed.entries = entries
+    
+    with patch("feedparser.parse", return_value=mock_feed):
+        result_str = await get_aws_feed_news(max_articles=3)
+        result = json.loads(result_str)
+        
+        assert result["total_articles_returned"] == 3
+
+
+@pytest.mark.asyncio
+async def test_get_aws_feed_news_parse_error():
+    """Test handling of RSS feed parse error"""
+    mock_feed = MagicMock()
+    mock_feed.bozo = True
+    mock_feed.bozo_exception = Exception("Parse error")
+    
+    with patch("feedparser.parse", return_value=mock_feed):
+        result = await get_aws_feed_news()
+        
+        assert "Error parsing RSS feed" in result
 

@@ -2,6 +2,7 @@
 
 import httpx
 import json
+import feedparser
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from urllib.parse import urlencode
@@ -142,6 +143,101 @@ async def get_aws_news(
         return json.dumps(result, indent=2)
     except Exception as e:
         return f"Error fetching AWS news: {str(e)}"
+
+
+@mcp.tool(
+    description="""
+        Fetches the latest AWS announcements directly from the official AWS What's New RSS feed.
+        
+        This tool provides real-time access to AWS's official announcements feed, which includes:
+        - New product launches
+        - Service updates and enhancements
+        - Regional expansions
+        - Feature announcements
+        - Service availability updates
+        
+        The feed returns the most recent announcements in chronological order. You can optionally
+        filter the results by specifying search keywords and limit the number of articles returned.
+        
+        Examples:
+        - To get the latest 10 AWS announcements: use max_articles=10
+        - To search for specific service announcements: use search_keywords="lambda"
+        - To get recent S3 announcements: use search_keywords="s3", max_articles=5
+        
+        Use this tool when:
+        1. You need the very latest AWS announcements
+        2. You want to see what's new across all AWS services
+        3. You need to check recent updates for a specific service
+        4. You want to stay current with AWS product launches
+        """
+)
+async def get_aws_feed_news(
+    max_articles: int = 10,
+    search_keywords: Optional[str] = None,
+) -> str:
+    """
+    Get the latest AWS announcements from the official AWS What's New RSS feed.
+    
+    Args:
+        max_articles: Maximum number of articles to return (default: 10)
+        search_keywords: Optional keywords to filter articles (searches in title and description)
+    
+    Returns:
+        JSON string containing the latest AWS announcements
+    """
+    try:
+        feed_url = "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+        
+        # Parse the RSS feed
+        feed = feedparser.parse(feed_url)
+        
+        if feed.bozo:
+            return f"Error parsing RSS feed: {feed.bozo_exception}"
+        
+        articles = []
+        
+        for entry in feed.entries:
+            # Extract article information
+            title = entry.get("title", "")
+            description = entry.get("description", "")
+            link = entry.get("link", "")
+            published = entry.get("published", "")
+            
+            # Filter by search keywords if provided
+            if search_keywords:
+                search_lower = search_keywords.lower()
+                if search_lower not in title.lower() and search_lower not in description.lower():
+                    continue
+            
+            article_info = {
+                "title": title,
+                "description": description,
+                "url": link,
+                "published_date": published,
+            }
+            
+            # Add tags if available
+            if hasattr(entry, 'tags'):
+                article_info["tags"] = [tag.term for tag in entry.tags]
+            
+            articles.append(article_info)
+            
+            # Stop if we've reached the max number of articles
+            if len(articles) >= max_articles:
+                break
+        
+        result = {
+            "source": "AWS What's New Feed",
+            "feed_url": feed_url,
+            "total_articles_returned": len(articles),
+            "search_keywords": search_keywords,
+            "articles": articles,
+        }
+        
+        return json.dumps(result, indent=2)
+        
+    except Exception as e:
+        return f"Error fetching AWS feed: {str(e)}"
 
 
 # Register prompts

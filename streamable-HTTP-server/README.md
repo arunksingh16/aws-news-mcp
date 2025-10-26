@@ -4,9 +4,12 @@ A FastMCP server that provides AI assistants with access to AWS news, announceme
 
 ## Features
 
-- 🎯 **1 Tool**: `get_aws_news` - Fetch AWS news and blogs with flexible filtering
-- 🎨 **7 Prompts**: Pre-built prompt templates for common queries
+- 🎯 **2 Tools**: 
+  - `get_aws_news` - Fetch AWS news and blogs with flexible filtering from API
+  - `get_aws_feed_news` - Get real-time updates from official AWS RSS feed
+- 🎨 **10 Prompts**: Pre-built prompt templates for common queries
 - 🔍 **Flexible Search**: Filter by service, date, content type, and regional expansions
+- 📡 **Real-time Feed**: Direct access to AWS official RSS feed
 - 🌐 **Health Endpoint**: Built-in health check for monitoring
 - ✅ **Fully Tested**: Comprehensive test suite with pytest
 
@@ -171,9 +174,53 @@ get_aws_news(
 }
 ```
 
+### Tool: `get_aws_feed_news`
+
+Fetch the latest AWS announcements directly from the official AWS What's New RSS feed. This tool provides real-time access to the most recent AWS announcements as they are published.
+
+**Parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `max_articles` | integer | No | 10 | Maximum number of articles to return |
+| `search_keywords` | string | No | - | Optional keywords to filter articles (searches in title and description) |
+
+**Example Usage:**
+
+```python
+# Get the latest 10 AWS announcements
+get_aws_feed_news(max_articles=10)
+
+# Search for Lambda-related announcements
+get_aws_feed_news(search_keywords="lambda", max_articles=15)
+
+# Get latest S3 updates
+get_aws_feed_news(search_keywords="s3", max_articles=5)
+```
+
+**Example Response:**
+
+```json
+{
+  "source": "AWS What's New Feed",
+  "feed_url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/",
+  "total_articles_returned": 3,
+  "search_keywords": "lambda",
+  "articles": [
+    {
+      "title": "AWS Lambda increases maximum payload size...",
+      "description": "<p>AWS Lambda now supports up to 1 MB payload size...</p>",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2025/10/aws-lambda-payload-size/",
+      "published_date": "Fri, 24 Oct 2025 21:47:03 GMT",
+      "tags": ["compute", "lambda"]
+    }
+  ]
+}
+```
+
 ## Available Prompts
 
-The server includes 7 pre-built prompts to guide LLMs in making effective queries:
+The server includes 10 pre-built prompts to guide LLMs in making effective queries:
 
 ### 1. `aws_recent_updates`
 Get recent AWS updates (both news and blogs) for any service.
@@ -258,6 +305,40 @@ Comprehensive search across all AWS content.
 - "Everything about Lambda in the last 3 months"
 - "Complete S3 coverage including regional news"
 - "All DynamoDB content this quarter"
+
+### 8. `aws_latest_feed_updates`
+Get the very latest updates from the AWS official RSS feed.
+
+**Parameters:**
+- `max_articles` (int): Number of recent articles to fetch (default: 10)
+
+**Use cases:**
+- "What are the latest AWS announcements?"
+- "Show me the most recent AWS updates"
+- "What's new in AWS right now?"
+
+### 9. `aws_feed_service_updates`
+Get the latest feed updates for a specific AWS service.
+
+**Parameters:**
+- `service` (str): AWS service name (e.g., "lambda", "s3", "ec2")
+- `max_articles` (int): Maximum number of articles to return (default: 15)
+
+**Use cases:**
+- "Latest Lambda announcements from the feed"
+- "What's new with S3 according to AWS feed?"
+- "Recent EC2 updates from AWS official feed"
+
+### 10. `aws_breaking_news`
+Get the absolute latest breaking news from AWS (top 5 most recent announcements).
+
+**Parameters:**
+- None (returns the 5 most recent announcements)
+
+**Use cases:**
+- "Breaking AWS news"
+- "Just announced AWS services"
+- "What was just released by AWS?"
 
 ## Testing
 

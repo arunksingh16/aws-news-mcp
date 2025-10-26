@@ -129,3 +129,46 @@ def register_prompts(mcp: FastMCP):
         since_date = (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
         regional = "true" if include_regional else "false"
         return f"Call get_aws_news with: topic='{service}', news_type='all', since_date='{since_date}', include_regional_expansions={regional}, number_of_results=100"
+
+    @mcp.prompt
+    def aws_latest_feed_updates(max_articles: int = 10) -> str:
+        """
+        Get the very latest updates from AWS official feed.
+        
+        Use this for real-time AWS announcements:
+        - "What are the latest AWS announcements?"
+        - "Show me the most recent AWS updates"
+        - "What's new in AWS right now?"
+        
+        Args:
+            max_articles: Number of recent articles to fetch (default: 10)
+        """
+        return f"Call get_aws_feed_news with: max_articles={max_articles}"
+
+    @mcp.prompt
+    def aws_feed_service_updates(service: str, max_articles: int = 15) -> str:
+        """
+        Get the latest feed updates for a specific AWS service.
+        
+        Use this for service-specific real-time updates:
+        - "Latest Lambda announcements from the feed"
+        - "What's new with S3 according to AWS feed?"
+        - "Recent EC2 updates from AWS official feed"
+        
+        Args:
+            service: AWS service name (e.g., 'lambda', 's3', 'ec2')
+            max_articles: Maximum number of articles to return (default: 15)
+        """
+        return f"Call get_aws_feed_news with: search_keywords='{service}', max_articles={max_articles}"
+
+    @mcp.prompt
+    def aws_breaking_news() -> str:
+        """
+        Get the absolute latest breaking news from AWS.
+        
+        Use this for immediate, real-time updates:
+        - "Breaking AWS news"
+        - "Just announced AWS services"
+        - "What was just released by AWS?"
+        """
+        return "Call get_aws_feed_news with: max_articles=5"
