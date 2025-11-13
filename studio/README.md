@@ -18,7 +18,7 @@ npx @modelcontextprotocol/inspector
 ```
 npx @modelcontextprotocol/inspector python main.py
 ```
-![MCP inspector](assets/mcp-inspector.png)
+![MCP inspector](./assets/mcp-inspector.png)
 
 ### How to use this studio MCP Server locally in your local IDE(Claude or Cursor)
 MCP clients do NOT manage Python environments for you. They simply run the command you specify in mcp.json.
