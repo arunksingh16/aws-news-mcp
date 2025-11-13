@@ -31,8 +31,10 @@ A production-ready FastMCP server with HTTP transport that provides:
 
 📖 **[View detailed documentation →](streamable-HTTP-server/README.md)**
 
-### 2. **Studio Server** (Coming Soon)
-An enhanced MCP server implementation with additional features for Claude Desktop and other MCP clients.
+### 2) Studio Server (STDIO for local clients)
+An STDIO-based server optimized for Claude Desktop and MCP Inspector with simple venv-aware launch patterns and wrapper script support.
+
+📖 See details: `studio/README.md`
 
 ## 🚀 Quick Start
 
